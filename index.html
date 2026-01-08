@@ -475,6 +475,7 @@
             height: 400px;
             cursor: crosshair;
             background: white;
+            touch-action: none;
         }
         
         .text-answer-container {
@@ -756,7 +757,6 @@
         </div>
         
         <div class="content">
-            <!-- قسم تسجيل الدخول -->
             <div id="loginSection" class="section active">
                 <div class="login-card">
                     <h2><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h2>
@@ -782,7 +782,6 @@
                 </div>
             </div>
             
-            <!-- قسم اختيار الاختبار -->
             <div id="testsSection" class="section">
                 <div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin-bottom: 30px;">
                     <h2 style="margin: 0 0 20px 0; color: #2c3e50; display: flex; align-items: center; gap: 15px;">
@@ -792,7 +791,6 @@
                 </div>
                 
                 <div id="availableTests" class="tests-grid">
-                    <!-- سيتم عرض الاختبارات هنا -->
                 </div>
                 
                 <div id="noTestsMessage" style="text-align: center; padding: 60px; display: none;">
@@ -808,7 +806,6 @@
                 </div>
             </div>
             
-            <!-- قسم الاختبار -->
             <div id="testSection" class="section">
                 <div class="timer-container" id="timerContainer">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
@@ -836,7 +833,6 @@
                 </div>
                 
                 <div class="question-container" id="questionContainer">
-                    <!-- سيتم عرض الأسئلة هنا -->
                 </div>
                 
                 <div class="navigation">
@@ -854,7 +850,6 @@
                 </div>
             </div>
             
-            <!-- قسم إكمال الاختبار -->
             <div id="completionSection" class="section">
                 <div class="completion-section">
                     <div class="completion-icon">
@@ -872,7 +867,6 @@
                             <i class="fas fa-info-circle"></i> تفاصيل الاختبار
                         </h3>
                         <div id="testDetails" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                            <!-- سيتم عرض التفاصيل هنا -->
                         </div>
                     </div>
                     
@@ -882,7 +876,6 @@
                 </div>
             </div>
             
-            <!-- رسائل التنبيه -->
             <div id="alertMessage" class="alert"></div>
         </div>
     </div>
@@ -904,6 +897,8 @@
         let currentTool = 'pen';
         let currentColor = '#000000';
         let currentLineWidth = 2;
+        let lastX = 0;
+        let lastY = 0;
         
         document.addEventListener('DOMContentLoaded', function() {
             loadTests();
@@ -1319,7 +1314,7 @@
                         </div>
                         
                         <div class="canvas-container">
-                            <canvas id="drawingCanvas" width="800" height="400"></canvas>
+                            <canvas id="drawingCanvas"></canvas>
                         </div>
                         
                         <div class="text-answer-container">
@@ -1341,16 +1336,23 @@
         
         function initializeDrawingCanvas(questionIndex) {
             drawingCanvas = document.getElementById('drawingCanvas');
+            const container = drawingCanvas.parentElement;
+            
+            drawingCanvas.width = container.clientWidth;
+            drawingCanvas.height = 400;
+            
             drawingContext = drawingCanvas.getContext('2d');
             
             drawingContext.lineCap = 'round';
             drawingContext.lineJoin = 'round';
+            drawingContext.strokeStyle = currentColor;
+            drawingContext.lineWidth = currentLineWidth;
             
             const savedAnswer = studentAnswers[questionIndex];
             if (savedAnswer && savedAnswer.drawing) {
                 const img = new Image();
                 img.onload = function() {
-                    drawingContext.drawImage(img, 0, 0);
+                    drawingContext.drawImage(img, 0, 0, drawingCanvas.width, drawingCanvas.height);
                 };
                 img.src = savedAnswer.drawing;
             } else {
@@ -1363,9 +1365,39 @@
             drawingCanvas.addEventListener('mouseup', stopDrawing);
             drawingCanvas.addEventListener('mouseout', stopDrawing);
             
-            drawingCanvas.addEventListener('touchstart', handleTouchStart);
-            drawingCanvas.addEventListener('touchmove', handleTouchMove);
-            drawingCanvas.addEventListener('touchend', stopDrawing);
+            drawingCanvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = drawingCanvas.getBoundingClientRect();
+                lastX = touch.clientX - rect.left;
+                lastY = touch.clientY - rect.top;
+                isDrawing = true;
+            });
+            
+            drawingCanvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                if (!isDrawing) return;
+                
+                const touch = e.touches[0];
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                drawingContext.beginPath();
+                drawingContext.moveTo(lastX, lastY);
+                drawingContext.lineTo(x, y);
+                drawingContext.stroke();
+                
+                lastX = x;
+                lastY = y;
+                
+                saveDrawingAnswer(currentQuestionIndex);
+            });
+            
+            drawingCanvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                stopDrawing();
+            });
         }
         
         function setDrawingTool(tool) {
@@ -1411,42 +1443,27 @@
         
         function startDrawing(e) {
             isDrawing = true;
-            draw(e);
+            const rect = drawingCanvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
         }
         
         function draw(e) {
             if (!isDrawing) return;
             
             const rect = drawingCanvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             
+            drawingContext.beginPath();
+            drawingContext.moveTo(lastX, lastY);
             drawingContext.lineTo(x, y);
             drawingContext.stroke();
-            drawingContext.beginPath();
-            drawingContext.moveTo(x, y);
+            
+            lastX = x;
+            lastY = y;
             
             saveDrawingAnswer(currentQuestionIndex);
-        }
-        
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            drawingCanvas.dispatchEvent(mouseEvent);
-        }
-        
-        function handleTouchMove(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            drawingCanvas.dispatchEvent(mouseEvent);
         }
         
         function stopDrawing() {
