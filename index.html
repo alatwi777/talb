@@ -1711,7 +1711,7 @@
    
 const API = "https://script.google.com/macros/s/AKfycbyeNwMi6T5XKVC7Myaic6nWW7iFQjSJRHP_A9lBD2VXXeJXsOdKaU430KuxsiI5EPNg/exec";
 function loginStudent() {
-    let civil = document.getElementById("civil").value;
+    let civil = document.getElementById("studentSsn").value;
 
     fetch(`${API}?action=checkStudent&civil=${civil}`)
         .then(res => res.text())
@@ -1728,6 +1728,7 @@ function loginStudent() {
 
 </body>
 </html>
+
 
 
 
