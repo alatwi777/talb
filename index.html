@@ -1711,35 +1711,54 @@
    
 const API = "https://script.google.com/macros/s/AKfycbw6GJLmABLnLN3UNU9uIe_BJAI1xUXsdY08d6-wDhhbzvR0uYV_G53BJSTsy6r5boE4/exec";
 
-function loginStudent() {
+async function loginStudent() {
     let civil = document.getElementById("studentSsn").value.trim();
 
-    fetch(`${API}?action=checkStudent&civil=${civil}`)
-        .then(res => res.json())
-        .then(result => {
-            if (result.status === "FOUND") {
+    try {
+        // التحقق من الطالب
+        const res = await fetch(`${API}?action=checkStudent&civil=${civil}`);
+        const result = await res.json();
 
-                // حفظ بيانات الطالب
-                localStorage.setItem("studentCivil", result.civil);
-                localStorage.setItem("studentName", result.name);
+        if (result.status === "FOUND") {
 
-                alert("تم التحقق، ابدأ الاختبار");
-                window.location.href = "exam.html";
+            // تخزين بيانات الطالب
+            localStorage.setItem("studentName", result.name);
+            localStorage.setItem("studentCivil", result.civil);
 
-            } else {
-                alert("الرقم المدني غير موجود");
+            // جلب الاختبارات
+            const examsResponse = await fetch(`${API}?action=getExams`);
+            const exams = await examsResponse.json();
+
+            if (exams.length === 0) {
+                alert("لا يوجد اختبار منشور حالياً");
+                return;
             }
-        })
-        .catch(err => {
-            alert("خطأ في الاتصال بالخادم");
-            console.error(err);
-        });
+
+            // اختيار أول اختبار
+            const exam = exams[0];
+
+            // تخزين examId
+            localStorage.setItem("examId", exam.examId);
+
+            // الانتقال لصفحة الاختبار
+            window.location.href = "exam.html";
+            return;
+        }
+
+        // إذا لم يتم العثور على الطالب
+        alert("الرقم المدني غير موجود");
+
+    } catch (err) {
+        alert("خطأ في الاتصال بالخادم");
+        console.error(err);
+    }
 }
 
 </script>
 
 </body>
 </html>
+
 
 
 
