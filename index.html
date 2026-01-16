@@ -1719,8 +1719,8 @@ function loginStudent() {
         .then(result => {
             if (result.status === "FOUND") {
 
-                // ⭐ حفظ بيانات الطالب
-                localStorage.setItem("studentCivil", civil);
+                // حفظ بيانات الطالب
+                localStorage.setItem("studentCivil", result.civil);
                 localStorage.setItem("studentName", result.name);
 
                 alert("تم التحقق، ابدأ الاختبار");
@@ -1740,6 +1740,7 @@ function loginStudent() {
 
 </body>
 </html>
+
 
 
 
