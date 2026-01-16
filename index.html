@@ -1710,24 +1710,37 @@
         }
    
 const API = "https://script.google.com/macros/s/AKfycbyeNwMi6T5XKVC7Myaic6nWW7iFQjSJRHP_A9lBD2VXXeJXsOdKaU430KuxsiI5EPNg/exec";
+
 function loginStudent() {
-    let civil = document.getElementById("studentSsn").value;
+    let civil = document.getElementById("studentSsn").value.trim();
 
     fetch(`${API}?action=checkStudent&civil=${civil}`)
-        .then(res => res.text())
+        .then(res => res.json())
         .then(result => {
-            if (result === "FOUND") {
+            if (result.status === "FOUND") {
+
+                // ⭐ حفظ بيانات الطالب
+                localStorage.setItem("studentCivil", civil);
+                localStorage.setItem("studentName", result.name);
+
                 alert("تم التحقق، ابدأ الاختبار");
                 window.location.href = "exam.html";
+
             } else {
                 alert("الرقم المدني غير موجود");
             }
+        })
+        .catch(err => {
+            alert("خطأ في الاتصال بالخادم");
+            console.error(err);
         });
 }
+
 </script>
 
 </body>
 </html>
+
 
 
 
