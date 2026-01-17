@@ -771,7 +771,7 @@
                             </div>
                         </div>
                         
-                        <button onclick="loginStudent()" class="btn btn-primary" id="loginBtn" style="width: 100%;">
+                        <button onclick="login()" class="btn btn-primary" id="loginBtn" style="width: 100%;">
                             <i class="fas fa-sign-in-alt"></i> دخول إلى المنصة
                         </button>
                         
@@ -1708,75 +1708,6 @@
                 alertDiv.style.display = 'none';
             }, 5000);
         }
-   
-const API = "https://script.google.com/macros/s/AKfycbw6GJLmABLnLN3UNU9uIe_BJAI1xUXsdY08d6-wDhhbzvR0uYV_G53BJSTsy6r5boE4/exec";
-
-async function loginStudent() {
-    let civil = document.getElementById("studentSsn").value.trim();
-
-    try {
-        // التحقق من الطالب
-        const res = await fetch(`${API}?action=checkStudent&civil=${civil}`);
-        const result = await res.json();
-
-        if (result.status === "FOUND") {
-
-            // تخزين بيانات الطالب
-            localStorage.setItem("studentName", result.name);
-            localStorage.setItem("studentCivil", result.civil);
-
-            // جلب الاختبارات
-            const examsResponse = await fetch(`${API}?action=getExams`);
-            const exams = await examsResponse.json();
-
-            if (exams.length === 0) {
-                alert("لا يوجد اختبار منشور حالياً");
-                return;
-            }
-
-            // اختيار أول اختبار
-            const exam = exams[0];
-
-            // تخزين examId
-            localStorage.setItem("examId", exam.examId);
-
-            // الانتقال لصفحة الاختبار
-            window.location.href = "exam.html";
-            return;
-        }
-
-        // إذا لم يتم العثور على الطالب
-        alert("الرقم المدني غير موجود");
-
-    } catch (err) {
-        alert("خطأ في الاتصال بالخادم");
-        console.error(err);
-    }
-}
-
-</script>
-
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
